@@ -1,0 +1,1062 @@
+<template>
+	<div class="nlv__container">
+		<swiper class="nlv-swiper" :current="tabIndex" @change="changeTab"  :duration="300" :indicator-dots="false"  :vertical="false" style="height:100%;">
+			<swiper-item>
+		<view class="nlv_main">
+			<swiper class="nlv-swiper" :indicator-dots="false" :vertical="true" :current="videoIndex" @change="handleSlider">
+				<swiper-item v-for="(item, index) in vlist" :key="index">
+					<view class="nlv-playerbox">
+						<!-- #ifdef MP-WEIXIN -->
+						<block v-if="item.online">
+						<live-player
+							:id="'myVideo' + index"
+							:ref="'myVideo' + index"
+							class="player-video"
+							:src="item.online ? item.src : item.room_video"
+							:autoplay="index == videoIndex && tabIndex == 0"
+							:controls="false"
+							:loop="true"
+							:show-center-play-btn="false"
+							objectFit="cover"
+							:style="{ height: winHeight, width: winWidth }"
+						></live-player>
+						</block>
+						<block v-if="!item.online">
+						<video
+							:id="'myVideo' + index"
+							:ref="'myVideo' + index"
+							:src="item.online ? item.src : item.room_video"
+							:autoplay="index == videoIndex && tabIndex == 0"
+							:controls="false"
+							:loop="true"
+							:show-center-play-btn="false"
+							objectFit="cover"
+							:style="{ height: winHeight, width: winWidth }"
+							
+						></video>
+						</block>
+						<!-- #endif -->
+						
+						<!-- #ifdef APP-PLUS || H5 -->
+						<video
+							:id="'myVideo' + index"
+							:ref="'myVideo' + index"
+							class="player-video"
+							:src="item.online ? item.src : item.room_video"
+							:autoplay="index == videoIndex && tabIndex == 0"
+							:controls="false"
+							:loop="true"
+							:show-center-play-btn="false"
+							objectFit="fill"
+							:style="{ height: winHeight, width: winWidth }"
+							
+						></video>
+						<!-- #endif -->
+						
+						<!-- #ifndef APP-PLUS || H5 -->
+						
+						<cover-view class="nlv_topbar" :style="{ height: headerBarH, 'padding-top': statusBarH }" style="display: flex;">
+							<cover-view class="topbar-info" style="display: flex;width: 90%;">
+								<cover-view class="avator-box">
+									<cover-image class="ta-avator" :src="item.user_avatar" mode="aspectFill" />
+								</cover-view>
+								<cover-view class="tabox" >
+									<cover-view class="ta-name" >{{ item.user_nickname }}</cover-view>
+									<!-- <cover-view class="ta-num"  v-if="true">{{ item.live_click_num }}</cover-view> -->
+								</cover-view>
+								<cover-view class="ta-gz" :class="item.is_follow ? 'ta-gz-on' : ''" @tap="handleFollow(index)">{{ item.is_follow ? '已关注' : '关注' }}</cover-view>
+								<cover-view class="member-num" v-if="true">{{ item.friend_num }}</cover-view>
+								<cover-view class="member-num" style="">{{__('观众：')}}{{ item.live_click_num }}</cover-view>
+							</cover-view>
+							<cover-view class="topbar-right" style="width: 10%;"><cover-image class="topbar_ico iconfont" src="../../../static/images/close.png" style="width:20px;height:20px;"  @tap="GoBack"></cover-image></cover-view>
+						</cover-view>
+						<cover-view class="nlv-rankbox" :style="{ top: headerBarH_1 }">
+							<cover-view class="nlv-rkls" style="width: 156upx;">
+								<cover-view class="rkitem" style="font-size: 20rpx;" @tap="tapTap">{{__('更多直播')}}</cover-view>
+							</cover-view>
+							<cover-view class="nlv-uid">{{__('U直播')}}:{{ item.user_id }}</cover-view>
+						</cover-view>
+						<cover-view class="nlv-footToolbar">
+
+							<cover-view class="nlv-infobox" style="display: flex;" v-if="(isShow)">
+								<cover-view class="nlv_reply" style="width: 88%;" @tap="handleRollMsg(index)"><cover-view class="nlv_reply_text">说点什么...</cover-view></cover-view>
+								<cover-view class="nlv_btntool" style="width: 12%;">
+<!-- 									<view class="btn-toolitem" v-if="false"><text class="iconfont i-btntool">&#xe61f;</text></cover-view> -->
+									<cover-view v-if="item.cart.length" class="btn-toolitem" @tap="handleLiveCart(index)" >
+										<cover-image class="iconfont i-btntool" style="width: 60upx;height:60upx;margin:10upx;" src="../../../static/images/cart.png" ></cover-image>
+									</cover-view>
+									<cover-view class="btn-toolitem btn-toolitem-cart" @tap="handleLiveGift" v-if="false"><cover-view class="iconfont i-btntool">&#xe637;</cover-view></cover-view>
+							        <!-- #ifndef MP-WEIXIN  ||  H5 -->
+									<cover-view class="btn-toolitem" style="margin-top:20upx;" v-if="true" @click="onShareBox"><cover-image class="iconfont i-btntool" src="../../../static/images/cart.png"  style="margin: 22upx 16upx;"></cover-image></cover-view>
+                                    <!-- #endif -->
+									<!-- <view class="btn-toolitem" v-if="false"><text class="iconfont i-btntool">&#xe656;</text></view> -->
+								</cover-view>
+							</cover-view>
+						</cover-view>
+							<!-- #endif -->
+							<!-- #ifdef APP-PLUS || H5 -->
+												<view class="nlv_topbar" :style="{ height: headerBarH, 'padding-top': statusBarH }">
+															<view class="topbar-info" style="width: 90%;">
+																<view class="avator-box">
+																	<image class="ta-avator" :src="item.user_avatar" mode="aspectFill" />
+																	<view class="tabox">
+																		<text class="ta-name">{{ item.user_nickname }}</text>
+																		<!-- <text class="ta-num" v-if="true">{{ item.live_click_num }}</text> -->
+																	</view>
+																	<text class="ta-gz" :class="item.is_follow ? 'ta-gz-on' : ''" @tap="handleFollow(index)">{{ item.is_follow ? '已关注' : '关注' }}</text>
+																</view>
+																<scroll-view class="avator-scroll" scroll-x show-scrollbar="false" v-if="false">
+																	<image class="ta-avator" src="/static/uimg/u__chat_img24.jpg" mode="aspectFill" />
+																	<image class="ta-avator" src="/static/uimg/u__chat_img28.jpg" mode="aspectFill" />
+																	<image class="ta-avator" src="/static/uimg/u__chat_img32.jpg" mode="aspectFill" />
+																	<image class="ta-avator" src="/static/uimg/u__chat_img19.jpg" mode="aspectFill" />
+																	<image class="ta-avator" src="/static/uimg/u__chat_img20.jpg" mode="aspectFill" />
+																	<image class="ta-avator" src="/static/uimg/u__chat_img23.jpg" mode="aspectFill" />
+																</scroll-view>
+																<text class="member-num" v-if="true">{{ item.friend_num }}</text>
+																<text class="member-num" style="">{{__('观众：')}}{{ item.live_click_num }}</text>
+															</view>
+															<view class="topbar-right"><text class="topbar_ico iconfont" :style="{fontFamily:'zc'}" @tap="GoBack">&#xe6dd;</text></view>
+														</view>
+														<view class="nlv-rankbox" :style="{ top: headerBarH }">
+															<!-- <view class="nlv-rkls" v-if="false">
+																<text class="rkitem">{{__('总排名')}}{{ item.allRank }}</text>
+																<text v-if="item.hourRank" class="rkitem">{{sprintf(__('小时榜第%d名'), item.hourRank)}}</text>
+															</view> -->
+															<view class="nlv-rkls" >
+																<text class="rkitem" @tap="tapTap">{{__('更多直播')}}</text>
+															</view>
+															<text class="nlv-uid">{{__('U直播')}}:{{ item.user_id }}</text>
+														</view>
+														<view class="nlv-footToolbar">
+															<view class="nlv-giftTipPanel" v-if="false">
+																<view class="giftip-item" @click="goToItem(item.item_id)">
+																	<image class="gt-avator" :src="item.product_image" mode="aspectFill" />
+																	<view class="gt-info">
+																		<text class="gt-tit">{{ item.product_item_name}}</text>
+																		<text class="gt-subtit">{{sprintf(__('￥%.2f'), item.item_unit_price)}}</text>
+																	</view>
+																	<image class="gt-gift" src="/static/gift/gift-img11.png" mode="aspectFill" v-if="true" />
+																</view>
+															</view>
+															<scroll-view class="nlv-rollMsgPanel" scroll-y show-scrollbar="false">
+																<block v-for="(msgitem, msgidx) in item.rollmsg" :key="msgidx">
+																	<view class="nlv-msglist">
+																		<view class="msg_bg">
+																			<text class="msg_name">{{ msgitem.uname }}</text>
+																			<text class="msg_text">{{ msgitem.content }}</text>
+																		</view>
+																	</view>
+																</block>
+															</scroll-view>
+															<view class="nlv-infobox">
+																<view class="nlv_reply" @tap="handleRollMsg(index)"><text class="nlv_reply_text">说点什么...</text></view>
+																<view class="nlv_btntool">
+																	<view class="btn-toolitem" v-if="false"><text class="iconfont i-btntool">&#xe61f;</text></view>
+																	<view v-if="item.cart.length" class="btn-toolitem" @tap="handleLiveCart(index)">
+																		<text class="iconfont i-btntool" style="color: #ff4e0e;font-size: 50upx;">&#xe603;</text>
+																	</view>
+																	<view class="btn-toolitem btn-toolitem-cart" @tap="handleLiveGift" v-if="false"><text class="iconfont i-btntool">&#xe637;</text></view>
+															        <!-- #ifndef H5 -->
+																	<view class="btn-toolitem" v-if="true" @click="onShareBox"><text class="iconfont i-btntool">&#xe659;</text></view>
+								                                    <!-- #endif -->
+																	<view class="btn-toolitem" v-if="false"><text class="iconfont i-btntool">&#xe656;</text></view>
+																</view>
+															</view>
+														</view>
+								<!-- #endif -->
+					</view>
+				</swiper-item>
+			</swiper>
+		</view>
+		</swiper-item>
+		<swiper-item>
+			<scroll-view  scroll-y  @scrolltolower="scrolltolower"  style="z-index:9999;height:100%;">
+					<view class="row-space-around">
+						<view class="bg-gray-help margin-sm padding-lr-lg padding-tb-sm radius-xs" v-for="(item,index) in liveList" :key="index" @tap="goLive(item.room_id, item.room_state)">
+							<image lazy-load :src="(item.room_poster)"  v-if="item.room_poster" style="width:344upx;" />
+							<view v-if="item.room_state" class="lv-status flexbox flex_alignc">
+								<text class="dot"></text>
+								<text style="color: #fff;font-size:18upx">{{__('直播中')}}</text>
+							</view>
+							
+							<view v-else class="lv-status flexbox flex_alignc">
+								<text class="dot dot-gray"></text>
+								<text style="color: #fff;font-size:24upx">{{__('离线中')}}</text>
+							</view>
+							<view class="item-info">
+								<image :src="item.user_avatar" mode="aspectFill" class="info-avatar" />
+								<!-- <view class="info-nickname">{{item.user_nickname}}</view> -->
+							</view>
+							<view class="live-room-name">
+								<text class="room-name">{{item.room_name || ''}}</text>
+							</view>
+						
+						</view>
+					</view>
+				
+				<!-- 	<view class="m-loading-box">
+					    <block v-if="(ispage)">
+					        <view class="u-loadmore">
+					            <label class="u-loading"></label>
+					            <text class="u-loadmore-tips">{{__('正在加载')}}</text>
+					        </view>
+					    </block>
+					    <block v-else>
+					        <view class="u-loadmore u-loadmore-line">
+					            <text class="u-loadmore-tips">{{__('没有更多数据啦！')}}</text>
+					        </view>
+					    </block>
+					</view> -->
+				
+				
+				
+			</scroll-view>
+		</swiper-item>
+		</swiper>
+		
+		<live-cart ref="liveCart" :vlist="vlist" @confirm="confirm" />
+		<roll-msg ref="rollMsg"  :vlist="vlist" :anchor="anchor"   @confirm="confirm" />
+		<live-gift ref="liveGift" />
+
+		<!-- #ifdef APP-PLUS -->
+        <share-box-app :shareDataDefault="shareData" ref="shareBoxApp"></share-box-app>
+        <!-- #endif -->
+	</div>
+</template>
+
+<script>
+import shareBoxApp from '@/components/share-box-app.vue'
+
+import {
+	mapState,
+	mapMutations
+} from 'vuex'
+
+const liveJson = require('../mock-live.js');
+import liveCart from './cp-live/cart.vue';
+import rollMsg from './cp-live/rollmsg';
+import liveGift from './cp-live/gift';
+let timer = null;
+
+export default {
+	data() {
+		return {
+			statusBarH: '',
+			headerBarH: '',
+			headerBarH_1: '',
+			winHeight: '',
+			winWidth: '',
+			videoIndex: 0,
+			room_id: 0,
+			vlist: [],
+			anchor: {},
+			clickNum: 0, //记录点击次数
+			
+			tabIndex: 0,
+			
+			page_index: 1,
+			ispage_index: !0,
+			flag_index: !0,
+			
+			liveList:[],
+			
+			videoclass: true,
+			isShow: true,
+			
+			ispause: !0,
+			scrollTop: 0,
+			old: {
+				scrollTop: 0
+			},
+
+
+			isdata: false,
+			page: 1,
+			rows: 10,
+			ispage: !0,
+			flag: !0,
+
+			shareData: {
+                shareText: '长乘学堂，支持原生App、微信小程序，邀请你一起体验！',
+                shareTitle: '长乘学堂，支持原生App、微信小程序，邀请你一起体验！',
+                href: "https://www.suteshop.com",
+                image: '',
+                price: 0
+            },
+		};
+	},
+	computed: mapState(['Config', 'StateCode', 'notice', 'plantformInfo', 'shopInfo', 'userInfo', 'hasLogin', '__', '$',
+		'sprintf'
+	]),
+	components: { liveCart, rollMsg, liveGift ,
+
+			shareBoxApp,
+			
+	},
+	beforeCreate() {
+		// #ifdef APP-PLUS
+		const domModule = weex.requireModule('dom');
+		domModule.addRule('fontFace', {
+			fontFamily: 'zc',
+			src: "url('https://at.alicdn.com/t/font_479702_sd7urmzj1m.ttf?t=1583054450848')"
+		});
+		// #endif
+	},
+	created() {
+		let _sH = uni.getSystemInfoSync().statusBarHeight;
+		let _hH = _sH + 50;
+		let _wH = uni.getSystemInfoSync().windowHeight;
+		let _wW = uni.getSystemInfoSync().windowWidth;
+		this.statusBarH = `${_sH}px`;
+		this.headerBarH = `${_hH}px`;
+		this.winHeight = `${_wH}px`;
+		this.winWidth = `${_wW}px`;
+		this.headerBarH_1 = `${_hH + 20}px`;
+		
+	},
+	onLoad(options) {
+		this.room_id = options.room_id ? options.room_id : 0;
+		this.getLiveRome()
+
+	},
+	onReady() {
+		//this.init();
+	},
+	async mounted() {
+		await this.getLiveList()
+		setTimeout(() => {
+			this.init();
+		}, 200);
+	},
+	onShareAppMessage() {
+		return {
+			//imageUrl: this.vlist[this.videoIndex].room_poster,
+			imageUrl: this.vlist[this.videoIndex].user_avatar,
+			title: this.sprintf(this.__('%s 的直播间'), this.vlist[this.videoIndex].user_nickname),
+			path: "/pagesub/uLive/subnvue/live?room_id=" + this.vlist[this.videoIndex].room_id + "&uid=" + this.userInfo.user_id
+		}
+	},
+	/**
+	 * 生命周期函数--监听页面卸载
+	 */
+	onUnload: function() {
+		// 离开页面，注销事件
+		// #ifdef APP-PLUS
+		if (this.$refs.shareBoxApp.showBoxView) {
+			this.$refs.shareBoxApp.cancel();
+		}
+		// #endif
+	},
+	onBackPress() {
+		// #ifdef APP-PLUS
+		if (this.$refs.shareBoxApp.showBoxView) {
+			this.$refs.shareBoxApp.cancel();
+			return true;
+		}
+		// #endif
+	},
+	
+	/**
+	 * 页面上拉触底事件的处理函数
+	 */
+	onReachBottom: function() {
+		
+	},
+	methods: {
+		...mapMutations(['logout', 'getPlantformInfo', 'forceUserInfo', 'getStoreInfo']),
+		init() {
+			this.videoContextList = [];
+			for (var i = 0; i < this.vlist.length; i++) {
+				// this.videoContextList.push(uni.createVideoContext('myVideo' + i, this))
+				// #ifdef APP-PLUS-NVUE
+				this.videoContextList.push(this.$refs['myVideo' + i][0]);
+				// #endif
+				// #ifndef APP-PLUS
+				
+				if (this.vlist[i].online)
+				{
+					this.videoContextList.push(uni.createLivePlayerContext('myVideo' + i, this));
+				}
+				else
+				{
+					this.videoContextList.push(uni.createVideoContext('myVideo' + i, this));
+				}
+				// #endif
+			}
+		},
+		
+		confirm: function(e,t) {
+			console.log(e)
+				this.winHeight = `${e}px`;
+				if(t)
+				{
+					this.isShow = true;
+				}
+				else
+				{
+					this.isShow = false;
+				}
+				
+		},
+		
+		changeTab: function (e) {
+			this.tabIndex = e.detail.current
+			if(e.detail.current == 1)
+			{
+				this.videoContextList[this.videoIndex].pause();
+			}
+			else
+			{
+				this.videoContextList[this.videoIndex].play();
+				
+			}
+		
+			
+		},
+		
+		goLive(room_id, room_state) {
+			if (room_state)
+			{
+				uni.navigateTo({ url: '/pagesub/uLive/subnvue/live?room_id=' + room_id });
+			}
+			else
+			{
+				this.$.alert(this.__('主播离线中'), function() {
+						uni.navigateTo({ url: '/pagesub/uLive/subnvue/live?room_id=' + room_id });
+				});
+			}
+		},
+		
+		tapTap: function() {
+			console.log(2222)
+			this.tabIndex = 1
+		},
+		
+		
+		getLiveRome:function () {
+			var that = this;
+			var param = {
+				page: this.page_index, 'rand':1, room_id:this.room_id
+			}
+			this.$.request({
+				url: that.Config.URL.live.index,
+				data: param,
+				success: function(data, status, msg, code) {
+					if (status == 200) {
+						if (data.items.length > 0) {
+							for (var r = 0; r < data.items.length; r++) {
+								//data.items[r]['story_time_str'] = dateUtil.dateUtils.format(that.$.datetimeFormatter(data.items[r]['story_time']));
+							}
+		
+							if (data.page >= data.total) {
+								that.liveList = that.liveList.concat(data.items),
+								that.flag_index = !1,
+								that.ispage_index =  !1
+							} else {
+								that.liveList = that.liveList.concat(data.items),
+								that.flag_index = !0,
+								that.ispage_index =  !0
+							}
+						} else {
+							
+							that.flag_index = !1,
+							that.ispage_index =  !1
+						}
+		
+		
+					} else {
+					}
+				}
+			});
+		},
+		
+		scroll: function(e) {
+			var that = this;
+		    // console.log(e.detail.scrollTop)
+		     this.old.scrollTop = e.detail.scrollTop + 100
+			 
+			 
+		  },
+		  scrolltolower() {
+			  if (this.flag_index) {
+			  	var that = this;
+			  	// that.setData({flag: !1});
+				that.flag_index = !1;
+			  	clearTimeout(t);
+			  
+			  	var t = setTimeout(function () {
+					that.page_index = parseInt(that.page_index) + 1
+			  		
+			  		that.getLiveRome()
+			  	}, 500)
+			  }
+		  },
+
+		getLiveList() {
+			let promise = new Promise((resolve, reject) => {
+
+				let that = this;
+				var params = {
+					page: this.page
+				};
+
+				params['room_id'] = that.room_id;
+
+				this.$.request({
+					url: this.Config.URL.live.index,
+					data: params,
+					success: (data, status, msg, code) => {
+						if (data.items.length > 0) {
+							for (var r = 0; r < data.items.length; r++) {
+								/*
+								data.items[r]['story_time_str'] = dateUtil.dateUtils.format(this.$.datetimeFormatter(data.items[r][
+									'story_time'
+								]));
+
+								data.items[r]['flag'] = false;
+								data.items[r]['objectFit'] = 'fill';
+								*/
+							   //data.items[r]['src'] = 'https://txmov2.a.yximgs.com/bs2/newWatermark/MTc5MzQ4OTcxMDY_zh_4.mp4';
+							   //data.items[r]['src'] = 'http://live.shopsuite.cn/shopsuite/10002.m3u8?auth_key=1581681485-0-0-2d9fc8c953341a7821b6472a617797a7';
+
+							   //data.items[r]['cart'] = [{'product_image':'https://test.shopsuite.cn/image.php/shop/data/upload/media/store/1001/image/20190617/1560752846468917.png!268x268.png', 'product_item_name':'name', item_unit_price:100, item_id:1001}];
+							}
+
+
+							if (data.page >= data.total) {
+								that.vlist = that.vlist.concat(data.items);
+								that.flag = !1;
+								that.ispage = !1;
+							} else {
+								that.vlist = that.vlist.concat(data.items);
+								that.flag = !0;
+								that.ispage = !0
+							}
+
+							resolve()
+
+						} else {
+
+							that.flag = !1;
+							that.ispage = !1;
+						}
+
+						that.ispage = !0;
+						
+						
+						
+						that.anchor = {
+							puid: that.vlist[that.videoIndex].puid,
+							zid: that.vlist[that.videoIndex].zid,
+							friend_id: that.vlist[that.videoIndex].user_id,
+							user_id: that.vlist[that.videoIndex].user_id,
+							name: that.vlist[that.videoIndex].user_nickname,
+							avatar: that.vlist[that.videoIndex].user_avatar,
+							type: 'group' //user
+						}
+					}
+				});
+			})
+
+			return promise
+		},
+		handleSlider(e) {
+			let curIndex = e.detail.current;
+			if (this.videoIndex >= 0) {
+				this.videoContextList[this.videoIndex].pause();
+				
+				if (typeof this.videoContextList[this.videoIndex].seek == 'function')
+				{
+					this.videoContextList[this.videoIndex].seek(0);
+				}
+			}
+			if (curIndex === this.videoIndex + 1) {
+				this.videoContextList[this.videoIndex + 1].play();
+			} else if (curIndex === this.videoIndex - 1) {
+				this.videoContextList[this.videoIndex - 1].play();
+			}
+			this.videoIndex = curIndex;
+
+
+			//
+			let that = this;
+			
+			
+			//读取主播信息anchor
+			this.anchor = {
+				puid: this.vlist[this.videoIndex].puid,
+				zid: this.vlist[this.videoIndex].zid,
+				friend_id: this.vlist[this.videoIndex].user_id,
+				user_id: this.vlist[this.videoIndex].user_id,
+				name: this.vlist[this.videoIndex].user_nickname,
+				avatar: this.vlist[this.videoIndex].user_avatar,
+				type: 'group' //group
+			}
+			
+			
+			//初始化微信分享
+            let $title = this.sprintf(this.__('%s 的直播间'), this.vlist[this.videoIndex].user_nickname);
+            let $desc = this.vlist[this.videoIndex].room_name;
+            let $link =  that.$.sprintf('%s/h5/pagesub/uLive/subnvue/live?room_id=%d&uid=%d', that.Config.SiteUrl, this.vlist[this.videoIndex].room_id, this.userInfo.user_id);
+            let $img_url = this.vlist[this.videoIndex].user_avatar;
+
+            //初始化微信分享
+            that.$.wxShare($title, $desc, $link, $img_url)
+		},
+		play(index) {
+			this.videoContextList[index].play();
+		},
+		pause(index) {
+			this.videoContextList[index].pause();
+		},
+		handleFollow(index) {
+			let vlist = this.vlist;
+			vlist[index].is_follow = !vlist[index].is_follow;
+			this.vlist = vlist;
+
+			//执行Follow
+			let that = this;
+			var params = {
+				friend_id: vlist[index].user_id
+			};
+
+			if (vlist[index].is_follow)
+			{
+				this.$.request({
+					url: this.Config.URL.user.friend_agree,
+					data: params,
+					success: (data, status, msg, code) => {
+					}
+				});
+			}
+			else
+			{
+				this.$.request({
+					url: this.Config.URL.user.friend_refuse,
+					data: params,
+					success: (data, status, msg, code) => {
+					}
+				});
+			}
+		},
+		handleRollMsg(index) {
+			console.log(9999)
+			this.$refs.rollMsg.show(index);
+		},
+		handleLiveCart(index) {
+			this.$refs.liveCart.show(index);
+		},
+		handleLiveGift() {
+			this.$refs.liveGift.show();
+		},
+		GoBack() {
+			uni.navigateBack();
+		},
+		goToItem(item_id){
+			uni.navigateTo({
+				url:"/pages/product/detail?pid=" + item_id
+			})
+		},
+		onShareBox: function(e) {
+			let that = this;
+
+			let $href = that.$.sprintf('%s/h5/pagesub/uLive/subnvue/live?room_id=%d&uid=%d', that.Config.SiteUrl, this.vlist[this.videoIndex].room_id, this.userInfo.user_id);
+
+			// #ifdef MP-WEIXIN
+			$href = "/pagesub/uLive/subnvue/live?room_id=" + this.vlist[this.videoIndex].room_id + "&uid=" + this.userInfo.user_id;
+			// #endif
+
+			this.shareData =  {
+				shareTitle: this.sprintf(this.__('%s 的直播间'), this.vlist[this.videoIndex].user_nickname),
+				shareText: this.vlist[this.videoIndex].room_name,
+				href: $href,
+				image: this.vlist[this.videoIndex].user_avatar,
+				price: 0
+			}
+
+			// 如允许点击超链接跳转，则应该打开一个新页面，并传入href，由新页面内嵌webview组件负责显示该链接内容
+			// #ifdef APP-PLUS
+			this.$refs.shareBoxApp.show();
+			// #endif
+
+			/*
+			//海报
+			if (e == 3)
+			{
+				// #ifndef APP-PLUS
+				this.$refs.shareBoxMp.show();
+				// #endif
+			}
+			else
+			{
+				// #ifdef H5
+				if (that.$.ifUniApp())
+				{
+					this.$refs.shareBoxH5.show();
+				}
+				else
+				{
+					this.$refs.shareBoxMp.show();
+				}
+				// #endif
+			}
+			*/
+		}
+	}
+};
+</script>
+<style scoped>
+
+.iconfont {
+	/* #ifdef APP-PLUS-NVUE */
+	font-family: zc;
+	/* #endif */
+
+	/* #ifndef APP-PLUS-NVUE */
+  font-family: "zc" !important;
+  font-size:46upx;
+  font-style: normal;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+	/* #endif */
+}
+
+
+.nlv__container {
+	flex: 1;
+	height: 100vh;
+}
+.nlv_topbar {
+	flex: 1;
+	flex-direction: row;
+	align-items: center;
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	z-index: 1001;
+}
+.topbar-info {
+	flex: 1;
+	flex-direction: row;
+	align-items: center;
+	padding-left: 20upx;
+}
+.avator-box {
+
+	flex-direction: row;
+	align-items: center;
+	padding-right: 3px;
+	height: 30px;
+}
+.ta-avator {
+	border-radius: 50%;
+	margin-right: 10upx;
+	height: 30px;
+	width: 30px;
+	background-color: rgba(0, 0, 0, 0.4);
+	border-radius: 20px;
+}
+.tabox {
+	text-overflow: ellipsis;
+	/* width: 150upx; */
+	background-color: rgba(0, 0, 0, 0.4);
+	border-radius: 20px;
+	padding:0 12px;
+}
+.ta-name {
+	color: #fff;
+	font-size: 24upx;
+	height: 30upx;
+	line-height: 30upx;
+}
+.ta-num {
+	color: #fff;
+	font-size: 20upx;
+	height: 24upx;
+	line-height: 24upx;
+}
+.ta-gz {
+	background: #ff0f33;
+	border-radius: 20px;
+	color: #fff;
+	font-size: 24upx;
+	text-align: center;
+	padding: 4px 0;
+	width: 45px;
+	
+}
+.ta-gz-on {
+	background: rgba(255, 255, 255, 0.2);
+	background-image: none;
+}
+.avator-scroll {
+	/* #ifndef APP-PLUS-NVUE */
+	white-space: nowrap;
+	/* #endif */
+	flex-direction: row;
+	padding: 0 10upx;
+	height: 30px;
+	width: 230upx;
+}
+.member-num {
+	background-color: rgba(0, 0, 0, 0.4);
+	border-radius: 20px;
+	color: #fff;
+	font-size: 24upx;
+	text-align: center;
+	padding: 5px 7px;
+}
+.topbar-right {
+	flex-direction: row;
+}
+.topbar_ico {
+	color: #fff;
+	font-size: 40upx;
+	padding: 15upx;
+	position: relative;
+	z-index: 1001;
+}
+.nlv-rankbox {
+	position: absolute;
+	left: 0;
+	right: 0;
+	z-index: 1001;
+}
+.nlv-rkls {
+	flex-direction: row;
+	align-items: center;
+}
+.rkitem {
+	background: rgba(255, 56, 166, 0.5);
+	border-radius: 20px;
+	color: #fff;
+	font-size: 24upx;
+	margin-left: 20upx;
+	padding: 2px 5px;
+}
+.nlv-uid {
+	color: rgba(255, 255, 255, 0.5);
+	font-size: 28upx;
+	position: absolute;
+	right: 20upx;
+	top: 0;
+}
+.nlv_main {
+	flex: 1;
+	height: 100%;
+}
+.nlv-swiper {
+	flex: 1;
+}
+.nlv-playerbox {
+	flex: 1;
+}
+.player-video {
+	height: 100%;
+	width: 100%;
+}
+
+.player-video-r {
+	height: 300upx;
+}
+.nlv-footToolbar {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+}
+.nlv-giftTipPanel {
+	flex-direction: row;
+	margin-left: 20upx;
+	margin-bottom: 20upx;
+}
+.giftip-item {
+	background: rgba(0, 0, 0, 0.3);
+	border-radius: 50px;
+	padding: 4px;
+	padding-right: 50px;
+	flex-direction: row;
+	align-items: center;
+}
+.gt-avator {
+	border-radius: 50%;
+	height: 36px;
+	width: 36px;
+}
+.gt-info {
+	padding: 0 20upx;
+	overflow: hidden;
+	width: 230upx;
+}
+.gt-tit {
+	color: #fff;
+	font-size: 28upx;
+	overflow: hidden;
+	height: 40upx;
+	line-height: 40upx;
+}
+.gt-subtit {
+	color: rgba(255, 255, 255, 0.7);
+	font-size: 24upx;
+}
+.gt-gift {
+	height: 70px;
+	width: 70px;
+	position: absolute;
+	top: -30upx;
+	right: -5px;
+}
+.nlv-rollMsgPanel {
+	margin-left: 20upx;
+	margin-bottom: 20upx;
+	height: 400upx;
+	width: 500upx;
+}
+.nlv-msglist {
+	margin-top: 10upx;
+	flex-direction: column;
+	align-items: flex-start;
+}
+.msg_bg {
+	background: rgba(0, 0, 0, 0.3);
+	border-radius: 12px;
+	padding: 4px 7px;
+	flex-direction: row;
+	flex-wrap: wrap;
+}
+.msg_name {
+	color: #fff81f;
+	font-size: 28upx;
+}
+.msg_text {
+	color: rgba(255, 255, 255, 1);
+	font-size: 28upx;
+}
+.nlv-infobox {
+	padding: 20upx;
+	flex: 1;
+	flex-direction: row;
+	align-items: center;
+}
+.nlv_reply {
+	flex: 1;
+	flex-direction: row;
+	background: rgba(0, 0, 0, 0.3);
+	border-radius: 50upx;
+	padding: 23upx;
+}
+.nlv_reply_text {
+	color: #fff;
+	font-size: 30upx;
+}
+.nlv_btntool {
+	flex-direction: row;
+	justify-content: flex-end;
+}
+.btn-toolitem {
+	background: rgba(0, 0, 0, 0.3);
+	border-radius: 50%;
+	align-items: center;
+	justify-content: center;
+	margin-left: 10upx;
+	height: 75upx;
+	width: 75upx;
+}
+.btn-toolitem-cart {
+	background:#f93b37;
+}
+.i-btntool {
+	color: #fff;
+	font-size: 40upx;
+}
+
+/* 横向两端对齐,位于各行之前、之间、之后都留有空白的容器内 */
+.row-space-around {
+	/* #ifndef APP-PLUS-NVUE */
+	display: flex;
+	position: relative;
+	/* #endif */
+	flex-direction: row !important;
+	/* justify-content: space-around !important; */
+	flex-wrap:wrap !important;
+	background: #F5F5F5;
+}
+
+.radius-xs {
+	padding:10upx;
+	border-radius: 10upx;
+	background: #fff;
+	margin: 4upx;
+}
+
+.lv-status {
+	
+	height:50upx;
+	width:120upx;
+	background-color: rgba(0, 0, 0, 0.4);
+	border-radius: 50upx;
+	color: #fff;
+	font-size: 18upx;
+	padding: 4upx 12upx;
+	position: absolute;
+	top: 20upx;
+	left: 20upx;
+	display: flex;
+	flex-direction:row !important;
+	/* #ifdef APP-PLUS-NVUE */
+	padding-top:14upx;
+	/* #endif */
+	
+}
+
+.dot-gray {
+	background-color: #ababab;
+	border-radius: 50%;
+	margin-right: 4upx;
+	margin-top: 14upx;
+	height: 12upx;
+	width: 12upx;
+	width: 12upx;
+	/* #ifdef APP-PLUS-NVUE */
+	margin-top: 4upx;
+	/* #endif */
+}
+
+.dot {
+	background-color: #ababab;
+	border-radius: 50%;
+	margin-right: 4upx;
+	margin-top: 14upx;
+	height: 12upx;
+	width: 12upx;
+	/* #ifdef APP-PLUS-NVUE */
+	margin-top: 4upx;
+	/* #endif */
+}
+
+.info-avatar {
+	height: 50upx;
+	width: 50upx;
+	border-radius: 50upx;
+	position: absolute;
+	bottom:30upx;
+	left:20upx;
+}
+
+.live-room-name {
+	width:344upx;
+
+	padding:10upx 6upx;
+}
+
+.room-name {
+	overflow:hidden;
+	text-overflow:ellipsis;  
+	lines: 2;
+	font-size: 24upx;
+}
+</style>
+

@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "shareLive"
+		},
+		{
+			"path": "../../code/AI"
+		}
+	],
+	"settings": {
+		"liveServer.settings.multiRootWorkspaceName": "xiaoetong"
+	}
+}

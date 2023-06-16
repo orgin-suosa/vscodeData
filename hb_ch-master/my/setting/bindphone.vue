@@ -1,0 +1,454 @@
+<template>
+	<view class="page">
+		<view class="m-cells m-cells-form">
+			<view class="m-cell">
+				<view class="m-cell-hd"><label class="u-label">{{__('手机号码')}}</label></view>
+				<view class="m-cell-bd" style="display: inherit;">
+					<block v-if="userInfo.user_mobile && Phone == userInfo.user_mobile">
+						<view style="width: 400rpx;height: 50rpx;">{{user_intl}}{{Phone}}</view>
+					</block>
+					<block v-else-if="langSetComplete">
+						<!-- 国家区号 -->
+						<picker mode="selector" @change="onIntlChange" :value="mode_index" :range="langLists" range-key="name" style="width: 80rpx;text-align: center;">
+							<view class="" style="color:#000000;height: 50rpx;line-height: 50rpx;">{{user_intl}}</view>
+						</picker>
+						<input class="m-input-style" type="number"  
+						 style=""  
+						v-model="Phone" :placeholder="__('请输入手机号码')" placeholder-style='color:#CCCCCC' 
+						maxlength="11" @input="inputphone" />
+					</block>
+				</view>
+				<view v-if="!isPhone" class="m-cell-ft">
+					<view class="m-icon-warn uni-icon uni-icon-info" type="warn"></view>
+				</view>
+			</view>
+
+			<view class="m-cell">
+				<view class="m-cell-hd"><label class="u-label">{{__('登录密码')}}</label></view>
+				<view class="m-cell-bd">
+					<input class="m-input-style" type="text" v-model="password" placeholder-style='color:#CCCCCC' :placeholder="__('请输入登录密码')"
+					 @input="onInputPassword" /></view>
+				<view v-if="!isPassword" class="m-cell-ft">
+					<view class="m-icon-warn uni-icon uni-icon-info" type="warn"></view>
+				</view>
+			</view>
+
+			<view class="m-cell">
+				<view class="m-cell-hd"><label class="u-label">{{__('验证码')}}</label></view>
+				<view class="m-cell-bd">
+					<input class="m-input-style" style="width: 300rpx;" type="number" 
+						:placeholder="__('请输入验证码')" placeholder-style='color:#CCCCCC' 
+						maxlength="6" @input="inputcode" />
+				</view>
+				<!-- <view v-if="!isCode" class="m-cell-ft">
+					<view class="m-icon-warn uni-icon uni-icon-info" type="warn"></view>
+				</view> -->
+				<view v-if="isSend" @tap="sendmessage" class="m-vcode-btn m-vcode-btn-hlight">{{btntext}}</view>
+				<view v-else class="m-vcode-btn m-vcode-btn-normal">{{btntext}}</view>
+			</view>
+		</view>
+		<view class="btn_box">
+			<button class="u-btn-hlight" @tap="submitdata">{{__('保存')}}</button>
+		</view>
+	</view>
+</template>
+
+<script>
+	import {
+		mapState,
+		mapMutations
+	} from 'vuex';
+	import verifycodeDialog from '../../components/verifycode-dialog/verifycode-dialog.vue';
+	export default {
+		name: 'asset',
+		data: function() {
+			return {
+				mode_index: 0,
+				user_intl: '+',
+				Phone: '',
+				password: '',
+				Code: '',
+				btntext: this.__('获取验证码'),
+				sendTime: 120,
+				isSend: !0,
+				isPhone: !0,
+				isPassword: !0,
+				isCode: !0,
+				
+				setDefaultLang: false,
+				langSetComplete: false,
+				showCodeDialog: false,
+				code: "1231",
+				langLists: []
+			};
+		},
+		components: {
+			verifycodeDialog,
+		},
+
+		computed: {
+			...mapState(['Config', 'StateCode', 'notice', 'plantformInfo', 'shopInfo', 'userInfo', 'hasLogin']),
+			
+		},
+		onLoad: function(options) {
+			uni.setNavigationBarTitle({
+				title: this.__('绑定手机')
+			});
+
+			var that = this;
+			
+			// 未设置手机号时，显示
+			if (!this.userInfo.user_mobile) {
+				that.setData({
+					setDefaultLang: !0
+				})
+			}
+			that.initLang();
+						
+			that.setData({
+				// user_intl: that.getUserIntl(that.userInfo.user_intl),
+				user_intl: that.userInfo.user_intl,
+				Phone: that.userInfo.user_mobile,
+			})
+			
+			if (this.userInfo.user_mobile) {
+				that.$.setNavigationBarTitle({
+					title: this.__("修改密码")
+				});
+			}
+		},
+		methods: {
+			...mapMutations(['login', 'logout', 'getPlantformInfo', 'forceUserInfo', 'getUserInfo']),
+			
+			initLang() {
+				var that = this;
+				let lists = [];
+
+				for (let idx in this.Lang.data.items) {
+					lists.push({
+						id: this.Lang.data.items[idx].currency_id,
+						name: this.Lang.data.items[idx].label + '(+' + this.Lang.data.items[idx].currency_id + ')'
+					})
+					// console.info(this.Lang.data.items[idx].currency_id, this.Lang.data.items[idx].label)
+					if (that.setDefaultLang && idx == this.mode_index) {
+						this.user_intl = '+' + this.Lang.data.items[idx].currency_id;
+					}
+				}
+               
+				that.setData({
+					langLists : lists,
+					langSetComplete: !0
+				});
+			},
+			
+			getUserIntl: function(userInfoIntl) {
+				let that = this;
+				if (that.setDefaultLang) {
+					return that.user_intl;
+				}
+				if (that.user_intl.length > 1) {
+					return that.user_intl;
+				}
+				// console.log('user_intl----',that.user_intl,userInfoIntl,that.userInfo.user_intl);
+				return that.user_intl + userInfoIntl;
+			},
+			onIntlChange: function(e) {
+				var that = this;
+				var index = e.detail.value
+				this.setData({
+					mode_index: e.detail.value,
+					user_intl : '+' + this.langLists[index].id
+				})
+			},
+			change: function(res) {
+				if (res.type == 1) {
+					this.code = res.code;
+					this.showCodeDialog = false;
+				} else if (res.type == -1) {
+					this.code = this.__("请输入验证码");
+					this.showCodeDialog = false;
+				} else {
+					setTimeout(function() {
+						res.resendCall()
+					}, 3000)
+				}
+			},
+			openCodeDialog: function() {
+				this.showCodeDialog = true;
+			},
+
+			inputphone: function(e) {
+				let that = this;
+				this.setData({
+					Phone: e.detail.value
+				});
+
+				if (that.$.isNull(e.detail.value)) {
+					this.setData({
+						isPhone: !1
+					});
+				} else {
+					if (that.$.tel(e.detail.value, this.user_intl)) {
+						this.setData({
+							isPhone: !0
+						})
+					}
+					else
+					{
+						this.setData({
+							isPhone: !1
+						});
+					}
+				}
+			},
+			onInputPassword: function(e) {
+
+			},
+
+			inputcode: function(e) {
+				let that = this;
+				this.setData({
+						Code: e.detail.value
+					}),
+					that.$.isNull(e.detail.value) ?
+					this.setData({
+						isCode: !1
+					}) :
+					this.setData({
+						isCode: !0
+					});
+			},
+			sendmessage: function() {
+				
+				let that = this;
+				if (that.$.isNull(this.Phone)) {
+					uni.showToast({
+						icon: 'none',
+						title: "请输入手机号！"
+					})
+					this.setData({
+						isPhone: !1
+					});
+				} else if (that.$.tel(this.Phone, this.user_intl)) {
+					
+					if (false && this.Phone && this.Phone == this.userInfo.user_mobile) 
+				   	that.$.confirm(that.__('你已经绑定过该手机！'));
+					else if (this.isSend) {
+						
+						this.setData({
+							isSend: !1
+						});
+                         
+						var t = this.sendTime;
+						var params = {
+							mobile: that.user_intl + this.Phone
+						};
+						console.log('params----',params);
+						
+						that.$.request({
+							url: this.Config.URL.account.get_mobile_checkcode,
+							data: params,
+							success: function(data, status, msg, code) {
+								if (status == 200) {
+									
+									var r = setInterval(function() {
+										t > 0 ?
+											that.setData({
+												btntext: t-- + 's'
+											}) :
+											(that.setData({
+													isSend: !0,
+													sendTime: 120,
+													btntext: that.__('重新获取')
+												}),
+												clearInterval(r));
+									}, 1e3);
+									
+								} else {
+									that.setData({
+										isSend: !0
+									}),
+									
+									uni.showToast({
+										icon:'none',
+										title:msg
+									})
+									// that.$.alert(msg);
+								}
+							},
+							fail: function(data) {
+								that.setData({
+									isSend: !0
+								}),
+								
+								uni.showToast({
+									icon: 'error',
+									title: "请求失败，请稍后重试！"
+								})
+							}
+						});
+					}
+				} else {
+					this.setData({
+						isPhone: !1
+					});
+				}
+			},
+			
+			submitdata: function() {
+				let that = this;
+				if (that.$.isNull(this.Phone))
+					this.setData({
+						isPhone: !1
+					});
+				else if (that.$.tel(this.Phone, this.user_intl))
+					if (false && this.Phone == this.userInfo.user_mobile) {
+						that.$.confirm(that.__('你目前已经绑定该手机！'));
+					}
+				else if (that.$.isNull(this.Code))
+					this.setData({
+						isCode: !1
+					});
+				else if (that.$.isNull(this.password)) {
+					this.setData({
+						isPassword: !1
+					});
+				} else {
+					
+					var params = {
+						mobile: that.user_intl + this.Phone,
+						password: this.password,
+						auth_code: this.Code,
+						user_intl: that.user_intl
+					};
+
+					that.$.request({
+						url: this.Config.URL.account.bind_mobile,
+						data: params,
+						success: function(data, status, msg, code) {
+							if (status == 200) {
+								let user_info = {};
+								user_info['user_mobile'] = that.Phone;
+								user_info['as'] = 1;
+
+								that.login(user_info);
+
+								that.$.showModal(that.__('操作成功'), function() {
+									that.$.backpage(1);
+								});
+							} else {
+								that.$.confirm(msg);
+							}
+						},
+						fail: function(data) {
+							
+							uni.showToast({
+								icon: 'error',
+								title: "请求失败，请稍后重试！"
+							})
+						}
+					});
+				} else
+					this.setData({
+						isPhone: !1
+					});
+			}
+		}
+	};
+</script>
+
+
+<style lang="scss" scoped>
+	@import '../../styles/_variables.scss';
+    
+	.page{
+		background-color: #FFFFFF;
+		width: 100%;
+	    display: flex;
+		flex-direction: column;
+		position: absolute;
+		left: 0;
+		top: 0;
+		bottom:0;
+	}
+	
+	.m-cells::before{border: none;}
+	.m-cells::after{border: none;}
+	
+	.m-cell{
+		// height: 60rpx;
+		padding: 25rpx;
+		border-bottom:#EEEEEE 1rpx solid ;
+		display: flex;
+		align-items: center;
+		
+		.m-cell-hd {
+			height: 50rpx;
+			line-height: 50rpx;
+			color: #333333;
+			font-size: 32rpx;
+			font-weight: 400;
+			font-family: PingFangSC-Regular, PingFang SC;
+			// background-color: #007AFF;	
+		}
+		
+		.m-cell-bd{
+			height: 50rpx;
+			line-height: 50rpx;
+			color: #333333;
+			font-size: 32rpx;
+			font-weight: 400;
+			font-family: PingFangSC-Regular, PingFang SC;
+			// background-color: #007AFF;
+			
+			.m-input-style{
+				height: 50rpx;
+				line-height: 50rpx;
+				width: 400rpx;
+			}
+			
+		}
+	}
+	
+	
+	.m-cell-vcode {
+		padding-top: 0;
+		padding-right: 0;
+		padding-bottom: 0;
+	}
+
+	.m-vcode-img {
+		width: 216upx;
+		height: 88upx;
+	}
+
+	.btn_box {
+		margin-top:80rpx ;
+		// padding: 20upx;
+	}
+
+	.m-code {
+		right: 210upx;
+	}
+	
+    .m-vcode-btn-hlight {
+		color: #F43D3E;
+	}
+	
+	.m-vcode-btn-normal {
+		color: #333333;
+	}
+	 
+	.m-vcode-btn {
+		border-left: none;
+		width: 200rpx;
+		padding-left: 10rpx;
+		padding-right: 10rpx;
+		text-align: center;
+		font-size: 32rpx;
+		font-weight: 400;
+		font-family: PingFangSC-Regular, PingFang SC;
+		height: 50rpx;
+		line-height: 50rpx;
+	}
+</style>

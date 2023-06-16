@@ -1,0 +1,53 @@
+$color1: rgba(15,28,52,1);
+$color2: #58FFD2;
+$color3: #FFBF38;
+$color4: #15A4AC;
+$color5: #83FFB5;
+$color6: #EB4343;
+$color7: #EB7C43;
+$color8: linear-gradient(360deg,rgba(21,164,172,1) 0%,rgba(40,210,200,1) 100%);
+$color9: #58FFD2;
+$color10: #A4AAB3;
+$color11: #969DBA;
+$color12: #BBBBBB;
+$color13: #FFAB00;
+$color14: #0000FF;
+$color15: linear-gradient(180deg,rgba(255,217,125,1) 0%,rgba(255,167,17,1) 100%);
+$color16: #D2D2D2;
+$color17: #333333;
+$color18: #999999;
+$color19: linear-gradient(90deg,rgba(40,210,200,1) 0%,rgba(21,164,172,1) 100%);
+$color20: #FF6E00;
+$colorA: #4A90E2;
+$colorB: #5ACE6D;
+$colorBackground: #F5F5F5;
+$colorWhite: #fff;
+$colorAqi1: #68CB00;
+$colorAqi2: #FFC000;
+$colorAqi3: #DF2D00;
+$colorAqi4: #6F0574;
+// 主题颜色
+$theme_color: #009c64;
+// title
+$title_color: #333333;
+// table
+$th_color: #999999;
+$td_color: #3b4352;
+// from
+$basics_color: #666666;
+$default_color: #c3c3c3;
+// input
+$input_default_color: #c3c3c3;
+$input_val_color: #3b4352;
+// border
+$border_color: #eeeeee;
+// tab默认
+$tab_default_color: #999999;
+// btn
+$confirm_btn_bgc: linear-gradient(90deg, #29c38c 0%, #009c64 100%);
+$confirm_btn_color: #ffffff;
+$commonColor7: #f7f8f9;
+.top-error-message {
+  top: 12%;
+  width: 80%;
+}

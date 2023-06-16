@@ -1,0 +1,799 @@
+<template>
+	<div class="nlv__container">
+		<view class="nlv_main">
+			<view class="nlv-swiper">
+				<view class="nlv-playerbox">
+					<live-pusher v-if="push_url" id="livePusher" ref="livePusher" class="livePusher" :url="push_url" :mode="mode"
+					 :muted="muted" :enable-camera="true" :auto-focus="true" :beauty="beauty" :whiteness="whiteness" :aspect="aspect"
+					 @statechange="statechange" @netstatus="netstatus" @error="error" :style="{ height: winHeight, width: winWidth }"></live-pusher>
+					<view class="nlv_topbar" :style="{ height: headerBarH, 'padding-top': statusBarH }" v-if="false">
+						<view class="topbar-info">
+							<view class="avator-box">
+								<image class="ta-avator" :src="item.avator" mode="aspectFill" />
+								<view class="tabox">
+									<text class="ta-name">{{ item.user_nickname }}</text>
+									<text class="ta-num">{{ item.hotNum }}</text>
+								</view>
+								<text class="ta-gz" :class="item.is_follow ? 'ta-gz-on' : ''" @tap="handleFollow(index)">{{ item.is_follow ? '已关注' : '关注' }}</text>
+							</view>
+							<scroll-view class="avator-scroll" scroll-x show-scrollbar="false">
+								<image class="ta-avator" src="/static/uimg/u__chat_img24.jpg" mode="aspectFill" />
+								<image class="ta-avator" src="/static/uimg/u__chat_img28.jpg" mode="aspectFill" />
+								<image class="ta-avator" src="/static/uimg/u__chat_img32.jpg" mode="aspectFill" />
+								<image class="ta-avator" src="/static/uimg/u__chat_img19.jpg" mode="aspectFill" />
+								<image class="ta-avator" src="/static/uimg/u__chat_img20.jpg" mode="aspectFill" />
+								<image class="ta-avator" src="/static/uimg/u__chat_img23.jpg" mode="aspectFill" />
+							</scroll-view>
+							<text class="member-num">{{ item.like_num }}</text>
+						</view>
+						<view class="topbar-right"><text class="topbar_ico iconfont" @tap="GoBack">&#xe84f;</text></view>
+					</view>
+					<view class="nlv-rankbox" :style="{ top: headerBarH }" v-if="false">
+						<view class="nlv-rkls">
+							<text class="rkitem">总排名{{ item.allRank }}</text>
+							<text v-if="item.hourRank" class="rkitem">小时榜第{{ item.hourRank }}名</text>
+						</view>
+						<text class="nlv-uid">U直播:{{ item.user_id }}</text>
+					</view>
+					<view class="nlv-footToolbar">
+						<view class="nlv-giftTipPanel">
+							<view class="giftip-item" v-if="false">
+								<image class="gt-avator" src="/static/uimg/u__chat_img5.jpg" mode="aspectFill" />
+								<view class="gt-info">
+									<text class="gt-tit">依拉曼💄</text>
+									<text class="gt-subtit">送主播 爱心球</text>
+								</view>
+								<image class="gt-gift" src="/static/gift/gift-img11.png" mode="aspectFill" />
+							</view>
+						</view>
+						<scroll-view class="nlv-rollMsgPanel" scroll-y show-scrollbar="false" v-if="true">
+							<block v-for="(msgitem, msgidx) in item.rollmsg" :key="msgidx">
+								<view class="nlv-msglist">
+									<view class="msg_bg">
+										<text class="msg_name">{{ msgitem.uname }}</text>
+										<text class="msg_text">{{ msgitem.content }}</text>
+									</view>
+								</view>
+							</block>
+						</scroll-view>
+						<view class="nlv-infobox">
+							<view class="nlv_btntool">
+								<view :class="['btn-toolitem', push_status=='start'?'btn-toolitem-cart':'']" @click="start"><text class="i-btntool">开始</text></view>
+								<view :class="['btn-toolitem', push_status=='pause'?'btn-toolitem-cart':'']" @click="pause"><text class="i-btntool">暂停</text></view>
+								<view :class="['btn-toolitem', push_status=='resume'?'btn-toolitem-cart':'']" @click="resume" v-if="true"><text
+									 class="i-btntool">恢复</text></view>
+								<view :class="['btn-toolitem', push_status=='stop'?'btn-toolitem-cart':'']" @click="stop" v-if="true"><text
+									 class="i-btntool">停止</text></view>
+								<view :class="['btn-toolitem']" @click="switchCamera"><text class="i-btntool">切换</text></view>
+							</view>
+						</view>
+					</view>
+				</view>
+			</view>
+		</view>
+		<live-cart ref="liveCart" :vlist="vlist" />
+		<live-gift ref="liveGift" />
+
+		<!-- #ifdef APP-PLUS -->
+		<share-box-app :shareDataDefault="shareData" ref="shareBoxApp"></share-box-app>
+		<!-- #endif -->
+	</div>
+</template>
+
+<script>
+	import {
+		mapState,
+		mapMutations
+	} from 'vuex'
+
+	import shareBoxApp from '@/components/share-box-app.vue'
+
+	const liveJson = require('../mock-live.js');
+	import liveCart from './cp-live/cart.vue';
+	import rollMsg from './cp-live/rollmsg';
+	import liveGift from './cp-live/gift';
+	let timer = null;
+	export default {
+		data() {
+			return {
+				options: {},
+				context: null,
+				push_url: '',
+				push_status: 'stop',
+
+
+				modeUse: 'SD', //推流视频模式，可取值：SD（标清）, HD（高清）, FHD（超清）
+				mode: 'SD', //推流视频模式，可取值：SD（标清）, HD（高清）, FHD（超清）
+				aspect: '9:16', //3:2
+				muted: false, //是否静音。
+				beauty: 9, //美颜，取值范围 0-9（iOS取值范围为1） ，0 表示关闭。
+				whiteness: 9, //美白，取值范围 0-9（iOS取值范围为1） ，0 表示关闭。
+
+				statusBarH: '',
+				headerBarH: '',
+				winHeight: '',
+				winWidth: '',
+				videoIndex: 0,
+				vlist: liveJson,
+				anchor: {},
+
+				zid: 0,
+
+				clickNum: 0, //记录点击次数
+				item: {
+					uid: 21865834,
+					avator: '/static/uimg/u__chat_img20.jpg',
+					poster: '/static/placeholder/video-img9.jpg',
+					src: 'https://txmov2.a.yximgs.com/bs2/newWatermark/MTc5MzQ4OTcxMDY_zh_4.mp4',
+					user_nickname: '',
+					room_name: '',
+					keyword: [''],
+					location: '',
+					hotNum: 2437,
+					allRank: '3万+',
+					hourRank: '16',
+					online: false,
+					is_follow: false,
+					like_num: 324,
+					cart: [{
+						name: '',
+						image: '/static/placeholder/cart-img1.jpg',
+						price: 9.9
+					}],
+					rollmsg: []
+				}
+			};
+		},
+		components: {
+			liveCart,
+			liveGift,
+			shareBoxApp
+		},
+		computed: mapState(['Config', 'StateCode', 'notice', 'plantformInfo', 'shopInfo', 'userInfo', 'hasLogin', '__', '$', 'sprintf', 'getMsg', '$Socket', '$apiconfig']),
+		watch: {
+		    getMsg: function (val) {
+		        let that = this;
+		        let cacheid = 0;
+		        console.log('获取到数据')
+		        console.log(val)
+		
+		        var nowDate = new Date();
+		        let lastid = val.message_id;
+		        let tempmy = this.userInfo.im;
+		
+		
+		        let msg_type = val.msg_type
+		
+		        let msg = {
+		            type: 'group',
+		            sendmethod: val.type,
+		            needload: false,
+		            fromid: val.fromid,
+		            toid: tempmy.puid,
+		            msg: {
+		                id: lastid,
+		                type: msg_type,
+		                userinfo: {id: val.fromid, uid: val.fromid, username: val.groupname, face: val.user_avatar},
+		                content: {text:val.content}
+		            }
+		        }
+		
+		
+				// 用户消息
+				switch (msg_type)
+				{
+				    case 'text':
+				        msg.msg.content.text = val.content;
+				        break;
+				    case 'voice':
+				        msg.msg.content.url = val.content;
+				        break;
+				    case 'img':
+				        msg.msg.content.url = val.content;
+				        break;
+				    case 'redEnvelope':
+				         msg.msg.content.blessing = val.content;
+				        break;
+		            case 'rtc':
+		                msg.msg.content.text = val.content;
+		                break;
+				}
+		
+				console.info(that.chattype )
+				console.info(val.type )
+		        if (val.type == 'group')
+		        {
+
+		            if (that.zid == val.toid)
+		            {
+						//todo IM群组发送消息
+						let msglist = this.item.rollmsg
+						let len = msglist.length
+						let data = {
+							id: `20190${++len}`,
+							uname: val.username + '：',
+							content: val.content
+						}
+						msglist.unshift(data) //插入到数组第一个
+						this.item.rollmsg = msglist
+		            }
+
+		            cacheid = msg.toid;
+		            ///群聊
+		
+		        }
+		        else
+		        {
+		            ///不让在当前页面显示内容
+		        }
+		
+		        if (that.zid == val.id)
+		        {
+		            this.$apiconfig.setMsgRead(lastid, ()=>{
+		
+		            })
+		            //设为已读
+		        }
+		
+		        this.$apiconfig.cacheMessage(val, val.sendmethod, cacheid, tempmy);
+		
+		        //新消息数归零
+		        this.resetWeidu({type: this.chattype, val: this.zid})
+		    }
+		},
+		beforeCreate() {
+			// #ifdef APP-PLUS
+			const domModule = weex.requireModule('dom');
+			domModule.addRule('fontFace', {
+				fontFamily: 'zc',
+				src: "url('../../../styles/zc_iconfont.ttf')"
+			});
+			// #endif
+		},
+		created() {
+			let _sH = uni.getSystemInfoSync().statusBarHeight;
+			let _hH = _sH + 50;
+			let _wH = uni.getSystemInfoSync().windowHeight;
+			let _wW = uni.getSystemInfoSync().windowWidth;
+			this.statusBarH = `${_sH}px`;
+			this.headerBarH = `${_hH}px`;
+			this.winHeight = `${_wH}px`;
+			this.winWidth = `${_wW}px`;
+		},
+		onLoad(options) {
+			this.options = options;
+			this.zid = options.zid;
+			this.modeUse = options.mode ? options.mode : 'HD';
+
+			var that = this;
+
+			if (that.options.url) {
+				this.push_url = decodeURIComponent(that.options.url);
+			}
+
+			this.videoIndex = parseInt(that.options.index);
+
+			if (uni.getSystemInfoSync().platform == "android") {
+				this.beauty = 9;
+				this.whiteness = 9;
+			}
+
+			if (uni.getSystemInfoSync().platform == "ios") {
+				this.beauty = 1;
+				this.whiteness = 1;
+			}
+			
+			this.forceUserInfo(function (user) {
+
+				//加入新群组
+                setTimeout(() => {
+                    var mine = {
+                        id: that.userInfo.im.puid,
+                        user_id: that.userInfo.user_id,
+                        mine: true
+                    };
+
+                    var to = {
+                        id: options.zid,
+                        zid: options.zid,
+                        type: 'join_group'
+                    };
+
+                    var chat_data = {
+                        mine: mine, to: to
+                    }
+
+                    that.$Socket.nsend(chat_data);
+                }, 100);
+			});
+		},
+		onReady() {
+			var that = this;
+
+			this.init();
+		},
+        onUnload: function() {
+			//退出群
+			var mine = {
+				id: this.userInfo.im.puid,
+				user_id: this.userInfo.user_id,
+				mine: true
+			};
+
+			var to = {
+				id: this.options.zid,
+				zid: this.options.zid,
+				type: 'leave_group'
+			};
+
+			var chat_data = {
+				mine: mine, to: to
+			}
+
+			this.$Socket.nsend(chat_data);
+        },
+		methods: {
+			...mapMutations(['login', 'logout', 'getPlantformInfo', 'forceUserInfo', 'getUserInfo', 'showCartNum', 'resetWeidu']),
+			init() {
+				setTimeout(() => {
+					// 注意：需要在onReady中 或 onLoad 延时
+					console.info(this.push_url);
+					this.context = uni.createLivePusherContext('livePusher', this);
+					console.info(this.push_url);
+
+					//以前为了解决绿屏，现在加入反而到会绿屏
+					this.stopPreview(() => {
+						//this.startPreview();
+					});
+				}, 200);
+
+
+			},
+			handleSlider(e) {
+				let curIndex = e.detail.current;
+				if (this.videoIndex >= 0) {
+					this.videoContextList[this.videoIndex].pause();
+					this.videoContextList[this.videoIndex].seek(0);
+				}
+				if (curIndex === this.videoIndex + 1) {
+					this.videoContextList[this.videoIndex + 1].play();
+				} else if (curIndex === this.videoIndex - 1) {
+					this.videoContextList[this.videoIndex - 1].play();
+				}
+				this.videoIndex = curIndex;
+			},
+			play(index) {
+				this.videoContextList[index].play();
+			},
+			pause(index) {
+				this.videoContextList[index].pause();
+			},
+			handleFollow(index) {
+				let vlist = this.vlist;
+				vlist[index].is_follow = !vlist[index].is_follow;
+				this.vlist = vlist;
+			},
+			handleRollMsg(index) {
+				this.$refs.rollMsg.show(index);
+			},
+			handleLiveCart(index) {
+				this.$refs.liveCart.show(index);
+			},
+			handleLiveGift() {
+				this.$refs.liveGift.show();
+			},
+			GoBack() {
+				uni.navigateBack();
+			},
+
+			statechange(e) {
+				console.log('statechange:' + JSON.stringify(e));
+			},
+			netstatus(e) {
+				//console.log('netstatus:' + JSON.stringify(e));
+			},
+			error(e) {
+				console.log('error:' + JSON.stringify(e));
+			},
+			start: function() {
+				console.info('start---')
+				if (this.push_status == 'stop') {
+					this.startPreview();
+
+					this.context.start({
+						success: a => {
+							console.log('livePusher.start:' + JSON.stringify(a));
+
+							this.push_status = 'start';
+							
+							this.mode = this.modeUse; //切换，尝试是否可以规避绿屏
+							
+							if (a.errMsg == 'start:ok') {}
+						}
+					});
+				} else if (this.push_status == 'pause') {
+					this.resume()
+				} else {
+					console.info(this.push_status)
+				}
+
+			},
+			close: function() {
+				this.context.close({
+					success: a => {
+						console.log('livePusher.close:' + JSON.stringify(a));
+					}
+				});
+			},
+			snapshot: function() {
+				this.context.snapshot({
+					success: e => {
+						console.log(JSON.stringify(e));
+					}
+				});
+			},
+			resume: function() {
+				console.log('resume -- ');
+				if (this.push_status == 'pause') {
+					this.context.resume({
+						success: a => {
+							console.log('livePusher.resume:' + JSON.stringify(a));
+							this.push_status = 'start';
+							if (a.errMsg == 'resume:ok') {}
+						}
+					});
+				}
+
+			},
+			pause: function() {
+				if (this.push_status == 'start') {
+					this.context.pause({
+						success: a => {
+							console.log('livePusher.pause:' + JSON.stringify(a));
+							this.push_status = 'pause';
+							if (a.errMsg == 'pause:ok') {}
+						}
+					});
+				}
+			},
+			stop: function() {
+				this.context.stop({
+					success: a => {
+						console.log(JSON.stringify(a));
+						this.push_status = 'stop';
+						if (a.errMsg == 'stop:ok') {}
+					}
+				});
+			},
+			switchCamera: function() {
+				this.context.switchCamera({
+					success: a => {
+						console.log('livePusher.switchCamera:' + JSON.stringify(a));
+					}
+				});
+			},
+			startPreview: function(callback) {
+				console.log('startPreview -- ');
+
+				this.context.startPreview({
+					success: a => {
+						console.log('livePusher.startPreview success:' + JSON.stringify(a));
+
+						callback && callback();
+					},
+					fail: a => {
+						console.log('livePusher.startPreview fail:' + JSON.stringify(a));
+						callback && callback();
+					}
+				});
+			},
+			stopPreview: function(callback) {
+				this.context.stopPreview({
+					success: a => {
+						console.log('livePusher.stopPreview success:' + JSON.stringify(a));
+						callback && callback();
+					},
+					fail: a => {
+						console.log('livePusher.stopPreview fail:' + JSON.stringify(a));
+						callback && callback();
+					}
+				});
+			}
+		}
+	};
+</script>
+<style scoped>
+	@import '../../../styles/live/reset.css';
+	@import '../../../styles/live/layout.css';
+	@import "../../../styles/zerocons.css";
+
+	.zc {
+		font-family: 'zc' !important;
+		font-size: 46upx;
+		font-style: normal;
+		line-height: 1;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	.iconfont {
+		font-family: zc;
+	}
+
+	.nlv__container {
+		flex: 1;
+		height: 100%;
+	}
+
+	.nlv_topbar {
+		flex: 1;
+		flex-direction: row;
+		align-items: center;
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 0;
+		z-index: 1001;
+	}
+
+	.topbar-info {
+		flex: 1;
+		flex-direction: row;
+		align-items: center;
+		padding-left: 20upx;
+	}
+
+	.avator-box {
+		background-color: rgba(0, 0, 0, 0.4);
+		border-radius: 20px;
+		flex-direction: row;
+		align-items: center;
+		padding-right: 3px;
+		height: 30px;
+	}
+
+	.ta-avator {
+		border-radius: 50%;
+		margin-right: 10upx;
+		height: 30px;
+		width: 30px;
+	}
+
+	.tabox {
+		text-overflow: ellipsis;
+		width: 150upx;
+	}
+
+	.ta-name {
+		color: #fff;
+		font-size: 24upx;
+	}
+
+	.ta-num {
+		color: #fff;
+		font-size: 24upx;
+	}
+
+	.ta-gz {
+		background-image: linear-gradient(to right, #ff540a, #ff0f33);
+		border-radius: 20px;
+		color: #fff;
+		font-size: 24upx;
+		text-align: center;
+		padding: 4px 0;
+		width: 45px;
+	}
+
+	.ta-gz-on {
+		background-color: rgba(255, 255, 255, 0.2);
+		background-image: none;
+	}
+
+	.avator-scroll {
+		/* #ifndef APP-PLUS-NVUE */
+		white-space: nowrap;
+		/* #endif */
+		flex-direction: row;
+		padding: 0 10upx;
+		height: 30px;
+		width: 230upx;
+	}
+
+	.member-num {
+		background-color: rgba(0, 0, 0, 0.4);
+		border-radius: 20px;
+		color: #fff;
+		font-size: 24upx;
+		text-align: center;
+		padding: 5px 7px;
+	}
+
+	.topbar-right {
+		flex-direction: row;
+	}
+
+	.topbar_ico {
+		color: #fff;
+		font-size: 40upx;
+		padding: 15upx;
+		position: relative;
+		z-index: 1001;
+	}
+
+	.nlv-rankbox {
+		position: absolute;
+		left: 0;
+		right: 0;
+		z-index: 1001;
+	}
+
+	.nlv-rkls {
+		flex-direction: row;
+		align-items: center;
+	}
+
+	.rkitem {
+		background-image: linear-gradient(to right, rgba(255, 56, 166, 0.5), rgba(57, 159, 255, 0.5));
+		border-radius: 20px;
+		color: #fff;
+		font-size: 24upx;
+		margin-left: 20upx;
+		padding: 2px 5px;
+	}
+
+	.nlv-uid {
+		color: rgba(255, 255, 255, 0.5);
+		font-size: 28upx;
+		position: absolute;
+		right: 20upx;
+		top: 0;
+	}
+
+	.nlv_main {
+		flex: 1;
+		height: 100%;
+	}
+
+	.nlv-swiper {
+		flex: 1;
+	}
+
+	.nlv-playerbox {
+		flex: 1;
+	}
+
+	.player-video {
+		height: 100%;
+		width: 100%;
+	}
+
+	.nlv-footToolbar {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+	}
+
+	.nlv-giftTipPanel {
+		flex-direction: row;
+		margin-left: 20upx;
+		margin-bottom: 20upx;
+	}
+
+	.giftip-item {
+		background-color: rgba(0, 0, 0, 0.3);
+		border-radius: 50px;
+		padding: 4px;
+		padding-right: 50px;
+		flex-direction: row;
+		align-items: center;
+	}
+
+	.gt-avator {
+		border-radius: 50%;
+		height: 36px;
+		width: 36px;
+	}
+
+	.gt-info {
+		padding: 0 20upx;
+		overflow: hidden;
+		width: 230upx;
+	}
+
+	.gt-tit {
+		color: #fff;
+		font-size: 28upx;
+		overflow: hidden;
+		height: 40upx;
+		line-height: 40upx;
+	}
+
+	.gt-subtit {
+		color: rgba(255, 255, 255, 0.7);
+		font-size: 24upx;
+	}
+
+	.gt-gift {
+		height: 70px;
+		width: 70px;
+		position: absolute;
+		top: -30upx;
+		right: -5px;
+	}
+
+	.nlv-rollMsgPanel {
+		margin-left: 20upx;
+		margin-bottom: 20upx;
+		height: 400upx;
+		width: 500upx;
+	}
+
+	.nlv-msglist {
+		margin-top: 10upx;
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.msg_bg {
+		background-color: rgba(0, 0, 0, 0.3);
+		border-radius: 12px;
+		padding: 4px 7px;
+		flex-direction: row;
+		flex-wrap: wrap;
+	}
+
+	.msg_name {
+		color: #fff81f;
+		font-size: 28upx;
+	}
+
+	.msg_text {
+		color: rgba(255, 255, 255, 1);
+		font-size: 28upx;
+	}
+
+	.nlv-infobox {
+		padding: 20upx;
+		flex: 1;
+		flex-direction: row;
+		align-items: center;
+	}
+
+	.nlv_reply {
+		flex: 1;
+		flex-direction: row;
+		background-color: rgba(0, 0, 0, 0.3);
+		border-radius: 50upx;
+		padding: 23upx;
+	}
+
+	.nlv_reply_text {
+		color: #fff;
+		font-size: 30upx;
+	}
+
+	.nlv_btntool {
+		flex-direction: row;
+		justify-content: flex-end;
+	}
+
+	.btn-toolitem {
+		background-color: rgba(0, 0, 0, 0.3);
+		border-radius: 50%;
+		align-items: center;
+		justify-content: center;
+		margin-left: 20upx;
+		height: 100upx;
+		width: 100upx;
+	}
+
+	.btn-toolitem-cart {
+		background-image: linear-gradient(to right, #ff955d, #f93b37);
+	}
+
+	.i-btntool {
+		color: #fff;
+		font-size: 20upx;
+	}
+</style>

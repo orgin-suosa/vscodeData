@@ -1,0 +1,320 @@
+<template >
+	<view class="content-view" @click="itemClick">
+		<view class="left-view">
+			<view class="m-title">{{itemmodel.title}}</view>
+			<view class="m-comfrom" style="">
+				{{itemmodel.source}} {{timeStr()}}
+			</view>
+		</view>
+		<view class="right-view">
+			<image class="m-image-img" mode="aspectFill" :src="(itemmodel.img)" />
+		</view>
+	</view>
+
+	
+	<!-- <view class="media-item view"  @click="itemClick"> -->
+		
+		<!-- <view class="left-view">
+			<view class="m-title">{{itemmodel.title}}</view>
+			<view class="m-comfrom" style="">
+				{{itemmodel.source}} {{timeStr()}}
+			</view>
+		</view>
+		<view class="right-view">
+			<image class="m-image-img" mode="aspectFill" :src="(itemmodel.img)" />
+		</view> -->
+		
+		<!-- <view class="view" style="row">
+			<text class="media-title" :class="{'media-title2': options.article_type === 1 || options.article_type === 2}">{{options.title}}</text>
+			<view v-if="options.image_list || options.image_url" class="image-section flex-row" :class="{'image-section-right': options.article_type === 2, 'image-section-left': options.article_type === 1}"
+			 :style="{flexDirection: 'row' }">
+				<image class="image-list1" :class="{'image-list2': options.article_type === 1 || options.article_type === 2}" v-if="options.image_url"
+				 :src="options.image_url"></image>
+				<image class="image-list3" v-if="options.image_list" :src="source.url" v-for="(source, i) in options.image_list"
+				 :key="i" />
+			</view>
+		</view> -->
+		
+		<!-- <view class="media-foot flex-row" style="flex-direction: row;">
+			<view class="media-info flex-row" style="flex-direction: row;">
+				<text class="info-text">{{itemmodel.title}}</text>
+				<text class="info-text">{{itemmodel.title}}条评论</text>
+				<text class="info-text">{{itemmodel.title}}</text>
+			</view>
+			<view class="max-close-view" @click.stop="close">
+				<view class="close-l close-h"></view>
+				<view class="close-l close-v"></view>
+			</view>
+		</view> -->
+		
+		<!-- <view class="media-item-line" style="position: absolute;"></view> -->
+	<!-- </view> -->
+</template>
+
+<script>
+	export default {
+		
+		props: {
+			itemmodel: {
+				type: Object,
+				default () {
+					return {
+						id: '',
+						time: '',
+						title: '',
+						img: '',
+						source: '',
+					}
+				},
+			},
+		},
+		data() {
+			return {}
+		},
+		created: function() {},
+		methods: {
+			itemClick() {
+				this.$emit('itemClick', {
+					id: this.itemmodel.id
+				});
+			},
+			timeStr() {
+				if (this.itemmodel.time !== 'null') {
+					let arr = this.itemmodel.time.split(' ');
+					if (arr.length == 2) {
+						return arr[1];
+					}
+				}
+				return this.itemmodel.time;
+			},
+		}
+	}
+</script>
+
+
+<style>
+	.view {
+		flex-direction: column;
+	}
+
+	.flex-row {
+		flex-direction: row;
+	}
+
+	.flex-col {
+		flex-direction: column;
+	}
+
+	.list-cell {
+		width: 750rpx;
+		padding: 0 30rpx;
+	}
+
+	.uni-list-cell-hover {
+		background-color: #eeeeee;
+	}
+
+	.media-item {
+		position: relative;
+		flex: 1;
+		flex-direction: column;
+		/* border-bottom-width: 1rpx;
+		border-bottom-style: solid;
+		border-bottom-color: #ebebeb; */
+		padding: 20rpx 30rpx 21rpx 30rpx;
+	}
+
+    .media-item-hover{
+        background-color: #eee;
+    }
+
+	.media-item-line {
+		position: absolute;
+		left: 30rpx;
+		right: 30rpx;
+		bottom: 0;
+		height: 1rpx;
+		background-color: #ebebeb;
+	}
+
+	.media-image-right {
+		flex-direction: row;
+	}
+
+	.media-image-left {
+		flex-direction: row-reverse;
+	}
+
+	.media-title {
+		flex: 1;
+	}
+
+	.media-title {
+		lines: 3;
+		text-overflow: ellipsis;
+		font-size: 30rpx;
+		color: #555555;
+	}
+
+	.media-title2 {
+		flex: 1;
+		margin-top: 6rpx;
+		line-height: 40rpx;
+	}
+
+	.image-section {
+		margin-top: 20rpx;
+		flex-direction: row;
+		justify-content: space-between;
+	}
+
+	.image-section-right {
+		margin-top: 0rpx;
+		margin-left: 10rpx;
+		width: 225rpx;
+		height: 146rpx;
+	}
+
+	.image-section-left {
+		margin-top: 0rpx;
+		margin-right: 10rpx;
+		width: 225rpx;
+		height: 146rpx;
+	}
+
+	.image-list1 {
+		width: 690rpx;
+		height: 481rpx;
+	}
+
+	.image-list2 {
+		width: 225rpx;
+		height: 146rpx;
+	}
+
+	.image-list3 {
+		width: 225rpx;
+		/* #ifdef H5 */
+		width: 30%;
+		/* #endif */
+		height: 146rpx;
+		/* #ifdef H5 */
+		height: 146px;
+		/* #endif */
+	}
+
+	.media-info {
+		flex-direction: row;
+		align-items: center;
+	}
+
+	.info-text {
+		margin-right: 20rpx;
+		color: #999999;
+		font-size: 24rpx;
+	}
+
+	.media-foot {
+		margin-top: 25rpx;
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	.max-close-view {
+		position: relative;
+		align-items: center;
+		flex-direction: row;
+		width: 40rpx;
+		height: 30rpx;
+		line-height: 30rpx;
+		border-width: 1rpx;
+		border-style: solid;
+		border-color: #aaaaaa;
+		border-radius: 4px;
+		justify-content: center;
+		text-align: center;
+	}
+
+	.close-l {
+		position: absolute;
+		width: 18rpx;
+		height: 1rpx;
+		background-color: #aaaaaa;
+	}
+
+	.close-h {
+		transform: rotate(45deg);
+	}
+
+	.close-v {
+		transform: rotate(-45deg);
+	}
+
+
+
+	.content-view {
+		
+		width: 750rpx;
+		height: 180rpx;
+		padding: 10 30rpx;
+		/* background-color: aqua; */
+        /* width: 690rpx; */
+		display: flex;
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+		
+		/* margin: 10rpx 30rpx; */
+		border-bottom: #E9E9E9 1rpx solid;
+	}
+
+	.left-view {
+
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		justify-content: space-between;
+		height: 160rpx;
+		margin-right: 20rpx;		
+	}
+	
+	.m-title {
+	
+		height: 80rpx;
+		line-height: 40rpx;
+		 font-size: 30rpx;
+		font-weight: Medium;
+		 color :#333333;
+		text-align: left;
+		overflow: hidden;
+		// white-space: nowrap;
+		text-overflow: ellipsis;
+	}
+    
+	.m-comfrom {
+	
+		font-size: 26rpx;
+		height: 40rpx;
+			line-height: 40rpx;
+			overflow: hidden;
+		white-space: nowrap;
+			text-overflow: ellipsis;
+			color: #999999;
+			// background-color: #007AFF;
+		width: 450rpx;
+	}
+	
+	.right-view {
+
+		height: 160rpx;
+		width: 200rpx;
+
+	}
+
+	.m-image-img {
+		height: 160rpx;
+		width: 200rpx;
+		border-radius: 10rpx;
+	}
+</style>

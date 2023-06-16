@@ -1,0 +1,178 @@
+<template>
+	<view>
+
+		<live-pusher v-if="push_url" id='livePusher' ref="livePusher" class="livePusher" :url="push_url"
+			mode="SD" :muted="true" :enable-camera="true" :auto-focus="true" :beauty="1" whiteness="2"
+			aspect="9:16" @statechange="statechange" @netstatus="netstatus" @error = "error"
+
+			:style="{width: width, height:height}"
+			></live-pusher>
+
+		<view>
+		    <button class="btn" @click="start">开始推流</button>
+		    <button class="btn" @click="pause">暂停推流</button>
+		    <button class="btn" @click="resume">resume</button>
+		    <button class="btn" @click="stop">停止推流</button>
+		    <button class="btn" @click="snapshot">快照</button>
+		    <button class="btn" @click="startPreview">开启摄像头预览</button>
+		    <button class="btn" @click="stopPreview">关闭摄像头预览</button>
+		    <button class="btn" @click="switchCamera">切换摄像头</button>
+		</view>
+
+				<view class="butlist">
+					<view @click="back" class="buticon martp10">
+						<image src="https://static.shopsuite.cn/xcxfile/appicon/livepush/back2.png"></image>
+						<view class="mar10">返回</view>
+					</view>
+					<view @click="switchCamera" class="buticon martp10">
+						<image src="https://static.shopsuite.cn/xcxfile/appicon/livepush/reversal.png"></image>
+						<view class="mar10">翻转</view>
+					</view>
+					<view class=" buticon" @click="startPusher">
+						<view class="x_f"></view>
+						<view :class="begin==true?'givebegin':'give'" >{{contTime}}</view>
+						<view class="pulse" v-if="begin"></view>
+					</view>
+					<view class="buticon martp10">
+						<image src="https://static.shopsuite.cn/xcxfile/appicon/livepush/beautiful.png"></image>
+						<view class="mar10">美化</view>
+					</view>
+					<view   class="buticon martp10" v-if="begin==false">
+						<picker :value="index" @change="bindPickerChange" :range="array" range-key='cont'>
+							<image src="https://static.shopsuite.cn/xcxfile/appicon/livepush/countdown.png"></image>
+							<view class="mar10">倒计时</view>
+						</picker>
+					</view>
+
+					<view @click="upload" class="buticon martp10" v-if="begin">
+						<image src="https://static.shopsuite.cn/xcxfile/appicon/livepush/yes.png"></image>
+						<view class="mar10">完成</view>
+					</view>
+				</view>
+			</view>
+	</view>
+</template>
+
+<script>
+	import diy from '@/components/themes/diy.vue'
+
+	import {
+	    mapState,
+	    mapMutations
+	} from 'vuex'
+
+    export default {
+
+		data() {
+			return {
+				fil: true,
+				height: '667px',
+				width: '',
+				context:null,
+				push_url:""
+			}
+		},
+        computed: mapState(['Config', 'StateCode', 'notice', 'plantformInfo', 'shopInfo', 'userInfo', 'hasLogin']),
+        onLoad: function(options) {
+			var that = this;
+
+			if (options.url) {
+				this.push_url = decodeURIComponent(options.url);
+			}
+
+
+				let res = uni.getSystemInfoSync();
+				this.height = `${res.windowHeight}px`;
+				this.width = `${res.windowWidth}px`;
+
+			console.info(this.push_url)
+        },
+        onReady() {
+            // 注意：需要在onReady中 或 onLoad 延时
+			console.info(this.push_url)
+            this.context = uni.createLivePusherContext("livePusher", this);
+			console.info(this.push_url)
+
+			this.startPreview();
+        },
+        methods: {
+            statechange(e) {
+                console.log("statechange:" + JSON.stringify(e));
+            },
+            netstatus(e) {
+                console.log("netstatus:" + JSON.stringify(e));
+            },
+            error(e) {
+                console.log("error:" + JSON.stringify(e));
+            },
+            start: function() {
+                this.context.start({
+                    success: (a) => {
+                        console.log("livePusher.start:" + JSON.stringify(a));
+                    }
+                });
+            },
+            close: function() {
+                this.context.close({
+                    success: (a) => {
+                        console.log("livePusher.close:" + JSON.stringify(a));
+                    }
+                });
+            },
+            snapshot: function() {
+                this.context.snapshot({
+                    success: (e) => {
+                        console.log(JSON.stringify(e));
+                    }
+                });
+            },
+            resume: function() {
+                this.context.resume({
+                    success: (a) => {
+                        console.log("livePusher.resume:" + JSON.stringify(a));
+                    }
+                });
+            },
+            pause: function() {
+                this.context.pause({
+                    success: (a) => {
+                        console.log("livePusher.pause:" + JSON.stringify(a));
+                    }
+                });
+            },
+            stop: function() {
+                this.context.stop({
+                    success: (a) => {
+                        console.log(JSON.stringify(a));
+                    }
+                });
+            },
+            switchCamera: function() {
+                this.context.switchCamera({
+                    success: (a) => {
+                        console.log("livePusher.switchCamera:" + JSON.stringify(a));
+                    }
+                });
+            },
+            startPreview: function() {
+                this.context.startPreview({
+                    success: (a) => {
+                        console.log("livePusher.startPreview:" + JSON.stringify(a));
+                    }
+                });
+            },
+            stopPreview: function() {
+                this.context.stopPreview({
+                    success: (a) => {
+                        console.log("livePusher.stopPreview:" + JSON.stringify(a));
+                    }
+                });
+            }
+        }
+    }
+</script>
+
+
+<style>
+
+</style>
